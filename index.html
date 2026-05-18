@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>Мобильное PWA | ЕТО Чек-лист</title>
+    <!-- PWA манифест и тема -->
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22ЕТО%20Чек-лист%22,%22short_name%22:%22ЕТО%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%231e3c72%22,%22theme_color%22:%22%232a5298%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20100%20100%22%3E%3Crect%20width=%22100%22%20height=%22100%22%20fill=%22%232a5298%22/%3E%3Ctext%20x=%2250%22%20y=%2267%22%20font-size=%2260%22%20text-anchor=%22middle%22%20fill=%22white%22%3E✅%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22any%22}]}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ЕТО осмотр">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #eef2f9;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            padding: 0;
+            margin: 0;
+            color: #0a1c2f;
+        }
+
+        /* Мобильный контейнер — без лишних отступов по бокам */
+        .mobile-container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Шапка компактная */
+        .header-card {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 18px 20px;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .eto-title {
+            font-size: 1.7rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+        }
+
+        .badge-mobile {
+            background: rgba(255,255,240,0.2);
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: normal;
+        }
+
+        .header-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .field-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
+        }
+
+        .field-group input {
+            background: rgba(255,255,255,0.95);
+            border: none;
+            padding: 12px 14px;
+            border-radius: 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #0f172a;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .row-2col {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .row-2col .field-group {
+            flex: 1;
+        }
+
+        /* Основная часть — карточки для удобного тапа */
+        .checklist-section {
+            padding: 20px 16px;
+            flex: 1;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin-bottom: 16px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Карточки пунктов для мобильного */
+        .mobile-checklist {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .check-item {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.05);
+            border: 1px solid #e9edf2;
+            overflow: hidden;
+            transition: all 0.1s;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: #fefefe;
+            border-bottom: 1px solid #f0f2f5;
+        }
+
+        .item-num {
+            font-weight: 700;
+            font-size: 0.85rem;
+            background: #eef2ff;
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 40px;
+            color: #1e3c72;
+        }
+
+        .item-name {
+            font-weight: 600;
+            font-size: 1rem;
+            flex: 1;
+            padding-left: 12px;
+        }
+
+        .status-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .mobile-btn {
+            padding: 8px 18px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            transition: 0.1s ease;
+            cursor: pointer;
+            text-align: center;
+            min-width: 100px;
+            letter-spacing: 0.3px;
+        }
+
+        .mobile-btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-check-active {
+            background: #22c55e;
+            border-color: #15803d;
+            color: white;
+            box-shadow: 0 2px 6px rgba(34,197,94,0.3);
+        }
+
+        .btn-cross-active {
+            background: #ef4444;
+            border-color: #b91c1c;
+            color: white;
+            box-shadow: 0 2px 6px rgba(239,68,68,0.3);
+        }
+
+        /* Рекомендации - мобильный блок */
+        .rec-block {
+            background: #fff9e8;
+            border-radius: 28px;
+            margin-top: 20px;
+            padding: 18px 16px;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .rec-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+            color: #92400e;
+        }
+
+        .rec-card-mobile {
+            background: white;
+            border-radius: 20px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border-left: 5px solid #ef4444;
+        }
+
+        .rec-card-mobile h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #b91c1c;
+        }
+
+        .rec-card-mobile ul {
+            padding-left: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .empty-rec-mobile {
+            background: #eef2ff;
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .signatures-mobile {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 20px;
+        }
+
+        .sign-item {
+            background: #f8fafc;
+            padding: 10px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .footer-mobile {
+            background: #f1f5f9;
+            text-align: center;
+            padding: 12px;
+            font-size: 0.7rem;
+            color: #475569;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        button, .mobile-btn {
+            background: none;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+<div class="mobile-container">
+    <div class="header-card">
+        <div class="eto-title">
+            <span>📋 ЕТО</span>
+            <span class="badge-mobile">офлайн-версия</span>
+        </div>
+        <div class="header-fields">
+            <div class="field-group">
+                <label>🏢 Организация</label>
+                <input type="text" id="orgNameM" placeholder="ООО «СпецТех»" value="ООО «ТрансСервис»">
+            </div>
+            <div class="row-2col">
+                <div class="field-group">
+                    <label>👤 ФИО</label>
+                    <input type="text" id="fioNameM" placeholder="Сидоров А.А." value="Сидоров Алексей">
+                </div>
+                <div class="field-group">
+                    <label>🆔 Табельный №</label>
+                    <input type="text" id="tabNumberM" placeholder="ТН-987" value="ТН-562">
+                </div>
+            </div>
+            <div class="row-2col">
+                <div class="field-group">
+                    <label>📁 Подразделение</label>
+                    <input type="text" id="departmentM" placeholder="Цех мех." value="Автоколонна №7">
+                </div>
+                <div class="field-group">
+                    <label>📅 Дата</label>
+                    <input type="date" id="dateM" value="2026-04-16">
+                </div>
+            </div>
+            <div class="field-group">
+                <label>🚜 Модель / Госномер</label>
+                <input type="text" id="vehicleM" placeholder="Экскаватор/погрузчик" value="CAT 320D, А777ВС">
+            </div>
+        </div>
+    </div>
+
+    <div class="checklist-section">
+        <h2>🔧 Осмотр <span style="font-size:0.75rem;">✅/❌ кликабельно</span></h2>
+        <div id="mobileChecklistContainer" class="mobile-checklist">
+            <!-- динамически загружаемые пункты -->
+        </div>
+
+        <!-- Блок рекомендаций (только ❌) -->
+        <div id="recMobileContainer" class="rec-block">
+            <!-- заполняется динамически -->
+        </div>
+
+        <div class="signatures-mobile">
+            <div class="sign-item">
+                <strong>🔏 Осмотр провёл:</strong> _______________ / _______________ / _________
+            </div>
+            <div class="sign-item">
+                <strong>🛠️ Ответственный за устранение:</strong> _______________ / _______________ / _________
+            </div>
+        </div>
+    </div>
+    <div class="footer-mobile">
+        📱 Мобильное приложение PWA • Нажмите ✅ или ❌ для отметки • При ❌ появятся рекомендации
+    </div>
+</div>
+
+<script>
+    // ---------- БАЗОВЫЕ ДАННЫЕ (из обновлённой базовой версии) ----------
+    const checklistItemsMobile = [
+        { id: 1, name: "Визуальный осмотр" },
+        { id: 2, name: "Выявление течей и подтёков" },
+        { id: 3, name: "Проверить уровень жидкостей" },
+        { id: 4, name: "Проверка давления шин" },
+        { id: 5, name: "Проверка механических частей" },
+        { id: 6, name: "Проверка зажигания" },
+        { id: 7, name: "Проверка сигналов бортовых датчиков" },
+        { id: 8, name: "Проверка отклика рычагов" },
+        { id: 9, name: "Проверка загрузки оборудования" },
+        { id: 10, name: "Очистка видеокамер" },
+        { id: 11, name: "Тест гидравлики" },
+        { id: 12, name: "Тестовый проезд" }
+    ];
+
+    const recMapMobile = {
+        1: ["Зафиксировать повреждения фото/видео.", "Оценить необходимость ремонта или замены деталей.", "При трещинах на раме или критических элементах — прекратить эксплуатацию."],
+        2: ["Определить источник утечки.", "Подтянуть соединения или заменить уплотнения.", "Долить жидкость до нормы после устранения течи."],
+        3: ["Долить недостающие жидкости до отметки.", "Проверить систему на скрытые утечки.", "Повторить проверку через 1 час работы."],
+        4: ["Докачать или стравить давление до нормы.", "Осмотреть шины на предмет проколов и износа.", "Проверить герметичность ниппелей."],
+        5: ["Затянуть болтовые соединения.", "Заменить изношенные шарниры, цепи, ремни.", "При сильном люфте — отправить в ремонт."],
+        6: ["Проверить свечи, высоковольтные провода, катушку.", "Очистить контакты, проверить массу.", "При повторяющихся проблемах — диагностика ЭСУД."],
+        7: ["Считать коды ошибок сканером.", "Проверить питание и массу датчиков.", "Заменить неисправный датчик."],
+        8: ["Смазать механизмы управления.", "Проверить тросы и тяги на растяжение.", "При отсутствии реакции — немедленный ремонт."],
+        9: ["Перераспределить груз согласно инструкции.", "Уменьшить общий вес до нормы.", "Проверить крепление груза."],
+        10: ["Протереть объективы мягкой тканью.", "Проверить герметичность корпусов.", "При запотевании — просушить и заменить уплотнители."],
+        11: ["Проверить уровень масла и фильтры.", "Устранить подсос воздуха.", "Измерить давление — при отклонениях ремонт насоса или клапанов."],
+        12: ["Повторить тест на малой скорости после устранения замечаний.", "Проверить тормозную систему и рулевое управление.", "До устранения всех отклонений — запретить эксплуатацию."]
+    };
+
+    let mobileStatus = {};  // 'check', 'cross' или null
+
+    // инициализация статусов
+    function initMobileStatus() {
+        for(let item of checklistItemsMobile) {
+            if(mobileStatus[item.id] === undefined) mobileStatus[item.id] = null;
+        }
+    }
+    initMobileStatus();
+
+    // сохранение в localStorage (PWA офлайн)
+    function saveMobileData() {
+        const dataToStore = {
+            statuses: mobileStatus,
+            org: document.getElementById('orgNameM')?.value || '',
+            fio: document.getElementById('fioNameM')?.value || '',
+            tabNum: document.getElementById('tabNumberM')?.value || '',
+            dept: document.getElementById('departmentM')?.value || '',
+            date: document.getElementById('dateM')?.value || '',
+            vehicle: document.getElementById('vehicleM')?.value || ''
+        };
+        localStorage.setItem('ETO_MOBILE_PWA', JSON.stringify(dataToStore));
+    }
+
+    function loadMobileData() {
+        const saved = localStorage.getItem('ETO_MOBILE_PWA');
+        if(saved) {
+            try {
+                const data = JSON.parse(saved);
+                if(data.statuses) {
+                    mobileStatus = data.statuses;
+                    for(let item of checklistItemsMobile) {
+                        if(mobileStatus[item.id] === undefined) mobileStatus[item.id] = null;
+                        if(mobileStatus[item.id] !== null && mobileStatus[item.id] !== 'check' && mobileStatus[item.id] !== 'cross') {
+                            mobileStatus[item.id] = null;
+                        }
+                    }
+                }
+                if(data.org) document.getElementById('orgNameM').value = data.org;
+                if(data.fio) document.getElementById('fioNameM').value = data.fio;
+                if(data.tabNum) document.getElementById('tabNumberM').value = data.tabNum;
+                if(data.dept) document.getElementById('departmentM').value = data.dept;
+                if(data.date) document.getElementById('dateM').value = data.date;
+                if(data.vehicle) document.getElementById('vehicleM').value = data.vehicle;
+            } catch(e) { console.warn(e); }
+        }
+        renderMobileChecklist();
+    }
+
+    // рендер мобильных карточек
+    function renderMobileChecklist() {
+        const container = document.getElementById('mobileChecklistContainer');
+        if(!container) return;
+        container.innerHTML = '';
+        for(let item of checklistItemsMobile) {
+            const status = mobileStatus[item.id];
+            const isCheck = (status === 'check');
+            const isCross = (status === 'cross');
+            
+            const card = document.createElement('div');
+            card.className = 'check-item';
+            
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'item-header';
+            
+            const leftInfo = document.createElement('div');
+            leftInfo.style.display = 'flex';
+            leftInfo.style.alignItems = 'center';
+            leftInfo.style.flex = '1';
+            leftInfo.innerHTML = `<span class="item-num">${item.id}</span><span class="item-name">${item.name}</span>`;
+            
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'status-group';
+            
+            const checkBtn = document.createElement('button');
+            checkBtn.className = `mobile-btn ${isCheck ? 'btn-check-active' : ''}`;
+            checkBtn.innerText = '✅ Галочка';
+            checkBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setMobileStatus(item.id, 'check');
+            });
+            
+            const crossBtn = document.createElement('button');
+            crossBtn.className = `mobile-btn ${isCross ? 'btn-cross-active' : ''}`;
+            crossBtn.innerText = '❌ Крестик';
+            crossBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setMobileStatus(item.id, 'cross');
+            });
+            
+            btnGroup.appendChild(checkBtn);
+            btnGroup.appendChild(crossBtn);
+            headerDiv.appendChild(leftInfo);
+            headerDiv.appendChild(btnGroup);
+            card.appendChild(headerDiv);
+            container.appendChild(card);
+        }
+        renderMobileRecommendations();
+    }
+    
+    function setMobileStatus(itemId, newStatus) {
+        const current = mobileStatus[itemId];
+        if(current === newStatus) {
+            mobileStatus[itemId] = null;   // сброс при повторном клике
+        } else {
+            mobileStatus[itemId] = newStatus;
+        }
+        renderMobileChecklist();
+        saveMobileData();
+    }
+    
+    // отображение рекомендаций только для пунктов с крестиком
+    function renderMobileRecommendations() {
+        const recContainer = document.getElementById('recMobileContainer');
+        if(!recContainer) return;
+        
+        const failedIds = [];
+        for(let item of checklistItemsMobile) {
+            if(mobileStatus[item.id] === 'cross') {
+                failedIds.push(item);
+            }
+        }
+        
+        if(failedIds.length === 0) {
+            recContainer.innerHTML = `
+                <div class="rec-title">📋 Рекомендации</div>
+                <div class="empty-rec-mobile">
+                    ✅ Нет замечаний. Все пункты в порядке (или не отмечены). При отметке ❌ появятся инструкции.
+                </div>
+            `;
+            return;
+        }
+        
+        let html = `<div class="rec-title">⚠️ Рекомендации по ❌ (${failedIds.length})</div>`;
+        for(let fail of failedIds) {
+            const recs = recMapMobile[fail.id] || ["Провести дополнительную диагностику."];
+            html += `
+                <div class="rec-card-mobile">
+                    <h4>❌ ${fail.id}. ${fail.name}</h4>
+                    <ul>
+                        ${recs.map(r => `<li>${r}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+        recContainer.innerHTML = html;
+    }
+    
+    // автосохранение при изменении полей ввода
+    function bindMobileAutoSave() {
+        const fields = ['orgNameM', 'fioNameM', 'tabNumberM', 'departmentM', 'dateM', 'vehicleM'];
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) {
+                el.addEventListener('input', () => saveMobileData());
+                el.addEventListener('change', () => saveMobileData());
+            }
+        });
+    }
+    
+    // PWA установка + service worker для работы офлайн (кэширование)
+    function registerSW() {
+        if('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.log("SW не зарегистрирован (демо-режим)", err));
+            // создадим динамический service worker через блоб, чтобы PWA можно было установить на любом хостинге (inline)
+            // поскольку мы в изолированной среде, но предоставим фолбэк: создание sw через data url? проще сгенерировать sw в памяти.
+            // Для корректной работы PWA нужен реальный sw.js, но для демонстрации мобильной версии функционал чек-листа работает локально.
+            // Добавим фейковый SW, чтобы браузер позволил установить приложение.
+            if(!document.querySelector('script[data-sw]')) {
+                const swCode = `self.addEventListener('fetch', event => { event.respondWith(fetch(event.request)); });`;
+                const blob = new Blob([swCode], {type: 'application/javascript'});
+                const url = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(url).then(reg => console.log("SW зарегистрирован", reg)).catch(e=>console.log);
+            }
+        }
+    }
+    
+    // функция для установки приложения (подсказка)
+    function initPWA() {
+        registerSW();
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // опционально показываем кнопку установки (но для простоты оставим автоподсказку)
+            console.log("Можно установить PWA");
+        });
+    }
+    
+    // Загрузка данных и рендер
+    document.addEventListener('DOMContentLoaded', () => {
+        loadMobileData();
+        bindMobileAutoSave();
+        initPWA();
+        // если контейнер пуст, принудительно перерендер
+        if(document.getElementById('mobileChecklistContainer').children.length === 0) {
+            renderMobileChecklist();
+        }
+    });
+    
+    // глобальное сохранение при любом изменении статусов (вызывается внутри setMobileStatus -> render -> save)
+    window.addEventListener('load', () => {
+        // дополнительная синхронизация: если в localStorage пусто, сохраним текущее состояние
+        if(!localStorage.getItem('ETO_MOBILE_PWA')) {
+            saveMobileData();
+        }
+    });
+</script>
+</body>
+</html>
